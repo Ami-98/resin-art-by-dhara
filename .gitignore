@@ -1,0 +1,17 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Node / Vite
+node_modules/
+client/dist/
+server/ResinArt.Api/wwwroot/
+
+# Persistent data root (contains customer leads, uploads, Data Protection keys & backups)
+data/
+**/App_Data/
+*.tmp
+.env

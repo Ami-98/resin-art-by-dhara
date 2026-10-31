@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-obsidian: #161118;
+  --color-brand-plum: #261B2A;
+  --color-brand-mauve: #5E3758;
+  --color-brand-rose: #C86D8A;
+  --color-brand-blush: #D98A9E;
+  --color-brand-blush-soft: #F6EEF0;
+  --color-brand-pearl: #FAF7F4;
+  --color-brand-border: #EADCE0;
+  --color-brand-gold: #C99B3B;
+  --color-brand-gold-light: #F3E5AB;
+  --color-brand-gold-deep: #9A7020;
+  --color-brand-peacock: #1B4D7E;
+  --color-brand-crimson: #B8293D;
+  --color-brand-emerald: #146348;
+}
+
+@layer base {
+  body {
+    font-family: 'Lato', system-ui, -apple-system, sans-serif;
+    background-color: #FAF7F4;
+    color: #161118;
+  }
+
+  h1, h2, h3, .font-serif-display {
+    font-family: 'Playfair Display', Georgia, serif;
+    letter-spacing: -0.01em;
+  }
+
+  .font-script {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-style: italic;
+  }
+
+  .tabular-price {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@utility shadow-luxe {
+  box-shadow: 0 12px 32px -10px rgba(94, 55, 88, 0.09), 0 2px 8px -2px rgba(22, 17, 24, 0.04);
+}
+
+@utility bg-obsidian-luxe {
+  background: linear-gradient(145deg, #161118 0%, #261B2A 58%, #352038 100%);
+}
+
+@utility bg-hero-pearl {
+  background: radial-gradient(circle at 85% 18%, rgba(217, 138, 158, 0.20) 0%, transparent 48%),
+              radial-gradient(circle at 12% 80%, rgba(201, 155, 59, 0.14) 0%, transparent 45%),
+              linear-gradient(135deg, #FAF7F4 0%, #F6EEF0 52%, #FBF4E6 100%);
+}

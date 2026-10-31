@@ -1,0 +1,46 @@
+services:
+  resinart:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: resinart-app
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - Storage__RootPath=/var/resinart-data
+      - Storage__SeedSampleData=true
+      - Seo__PublicBaseUrl=https://${DOMAIN_NAME:-localhost}
+      - Admin__InitialUsername=${ADMIN_INITIAL_USERNAME:-dhara}
+      - Admin__InitialPassword=${ADMIN_INITIAL_PASSWORD:-ResinArt@2026}
+    volumes:
+      - resinart_data:/var/resinart-data
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: resinart-caddy
+    restart: unless-stopped
+    depends_on:
+      - resinart
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME:-:80}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  resinart_data:
+  caddy_data:
+  caddy_config:

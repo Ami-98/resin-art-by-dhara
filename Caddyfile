@@ -1,0 +1,11 @@
+{$DOMAIN_NAME::80} {
+	encode zstd gzip
+
+	reverse_proxy resinart:8080 {
+		header_up X-Real-IP {remote_host}
+	}
+}
+
+www.{$DOMAIN_NAME} {
+	redir https://{$DOMAIN_NAME}{uri} permanent
+}

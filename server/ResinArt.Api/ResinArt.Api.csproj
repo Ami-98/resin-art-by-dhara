@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>ResinArt.Api</RootNamespace>
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MaxMind.GeoIP2" Version="6.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Sample catalogue + images used by DataSeeder on first run (Development only by default). -->
+    <None Include="SeedData\**\*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="ResinArt.Tests" />
+  </ItemGroup>
+
+</Project>
