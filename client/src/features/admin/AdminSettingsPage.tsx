@@ -256,6 +256,30 @@ export const AdminSettingsPage: React.FC = () => {
               Append lead reference code to the &ldquo;Hi&rdquo; message
             </label>
 
+            <div>
+              <label className="block text-xs font-semibold uppercase text-stone-700">
+                Instagram Profile Link
+              </label>
+              <input
+                type="url"
+                value={form.business.social?.instagram ?? ''}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    business: {
+                      ...form.business,
+                      social: {
+                        ...(form.business.social ?? {}),
+                        instagram: e.target.value.trim(),
+                      },
+                    },
+                  })
+                }
+                placeholder="https://www.instagram.com/resin_delights_by_dhara/"
+                className="mt-1 w-full rounded-xl border border-stone-300 px-3.5 py-2 text-sm"
+              />
+            </div>
+
             <div className="rounded-2xl bg-stone-50 p-3.5 text-xs">
               <div className="font-semibold text-stone-700">Live WhatsApp Redirect Preview:</div>
               <div className="mt-1 truncate font-mono text-stone-600">{previewWhatsAppUrl}</div>
@@ -341,21 +365,6 @@ export const AdminSettingsPage: React.FC = () => {
               <label className="flex items-center gap-2 text-xs font-medium text-stone-800">
                 <input
                   type="checkbox"
-                  checked={form.features.showRegionBanner}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      features: { ...form.features, showRegionBanner: e.target.checked },
-                    })
-                  }
-                  className="h-4 w-4 accent-amber-800"
-                />
-                Show top regional pricing banner to visitors
-              </label>
-
-              <label className="flex items-center gap-2 text-xs font-medium text-stone-800">
-                <input
-                  type="checkbox"
                   checked={form.features.enableCustomRequests}
                   onChange={(e) =>
                     setForm({
@@ -365,7 +374,7 @@ export const AdminSettingsPage: React.FC = () => {
                   }
                   className="h-4 w-4 accent-amber-800"
                 />
-                Enable custom product commissions
+                Allow custom order requests
               </label>
             </div>
 

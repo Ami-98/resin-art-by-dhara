@@ -107,7 +107,7 @@ public sealed class FeatureOptions
     public const string Section = "Features";
 
     public bool EnableCustomRequests { get; set; } = true;
-    public bool ShowRegionBanner { get; set; } = true;
+    public bool ShowRegionBanner { get; set; } = false;
 }
 
 /// <summary>"Seo" section – used for Open Graph / sitemap generation.</summary>

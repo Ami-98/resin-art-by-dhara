@@ -276,8 +276,8 @@ export const AdminProductsPage: React.FC = () => {
                   }
                   className="mt-1 w-full rounded-xl border border-stone-300 px-3.5 py-2 text-sm"
                 >
-                  <option value="standard">Standard Catalogue</option>
-                  <option value="custom">Custom Commission</option>
+                  <option value="standard">Ready Design</option>
+                  <option value="custom">Custom Order</option>
                 </select>
               </div>
 
@@ -343,7 +343,7 @@ export const AdminProductsPage: React.FC = () => {
 
             <div>
               <label className="block text-xs font-semibold uppercase text-stone-700">
-                Full Craft Description
+                Product Description
               </label>
               <textarea
                 rows={3}

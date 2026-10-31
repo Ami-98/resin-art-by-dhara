@@ -8,7 +8,7 @@ import { useRegion } from '../region/RegionContext';
 import { ProductCard } from './ProductCard';
 
 export const ProductGallery: React.FC<{ fixedType?: ProductType }> = ({ fixedType }) => {
-  const { region, regionDef, bootstrap } = useRegion();
+  const { region, bootstrap } = useRegion();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const category = searchParams.get('category') ?? '';
@@ -55,10 +55,7 @@ export const ProductGallery: React.FC<{ fixedType?: ProductType }> = ({ fixedTyp
               : 'All Handmade Pieces'}
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-[#4A3E47]">
-            Every piece is handmade to order in our Nadiad, Gujarat studio. Prices are shown in{' '}
-            <strong className="text-[#5E3758]">
-              {regionDef.name} ({regionDef.currency})
-            </strong>
+            Every piece is handmade to order in our Nadiad, Gujarat studio
             {shippingNote ? ` · ${shippingNote}` : ''}.
             {taxNote ? ` (${taxNote})` : ''}
           </p>

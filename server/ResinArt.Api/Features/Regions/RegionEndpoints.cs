@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using ResinArt.Api.Features.Auth;
 using ResinArt.Api.Features.Pricing;
 using ResinArt.Api.Infrastructure.Settings;
 using ResinArt.Api.Infrastructure.Storage;
@@ -77,7 +78,8 @@ public static class RegionEndpoints
 
             var match = regions.FromCoordinates(req.Lat, req.Lng);
             return Results.Ok(match);
-        }).WithTags("Regions");
+        }).RequireAuthorization(AdminAuthEndpoints.AdminPolicy)
+          .WithTags("Regions");
 
         return app;
     }

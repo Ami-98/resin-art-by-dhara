@@ -16,19 +16,52 @@ public sealed class JsonFileStore<T> : IDocumentStore<T>, IDisposable where T : 
     private readonly ILogger _logger;
     private readonly SemaphoreSlim _writeLock = new(1, 1);
     private volatile ImmutableDictionary<string, T> _items;
+    private long _lastWriteTicks;
 
     public JsonFileStore(string filePath, ILogger<JsonFileStore<T>> logger)
     {
         _filePath = Path.GetFullPath(filePath);
         _logger = logger;
-        _items = Load();
+        _items = Load(out _lastWriteTicks);
     }
 
     public string FilePath => _filePath;
 
+    private ImmutableDictionary<string, T> GetCurrentItems()
+    {
+        try
+        {
+            if (File.Exists(_filePath))
+            {
+                var ticks = File.GetLastWriteTimeUtc(_filePath).Ticks;
+                if (ticks != Interlocked.Read(ref _lastWriteTicks))
+                {
+                    _writeLock.Wait();
+                    try
+                    {
+                        var currentTicks = File.GetLastWriteTimeUtc(_filePath).Ticks;
+                        if (currentTicks != _lastWriteTicks)
+                        {
+                            _items = Load(out _lastWriteTicks);
+                        }
+                    }
+                    finally
+                    {
+                        _writeLock.Release();
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not hot-reload {Path}; using cached items.", _filePath);
+        }
+        return _items;
+    }
+
     public Task<IReadOnlyList<T>> QueryAsync(Func<T, bool>? filter = null, CancellationToken ct = default)
     {
-        IEnumerable<T> query = _items.Values;
+        IEnumerable<T> query = GetCurrentItems().Values;
         if (filter is not null) query = query.Where(filter);
         IReadOnlyList<T> result = query.Select(Clone).ToList();
         return Task.FromResult(result);
@@ -36,13 +69,13 @@ public sealed class JsonFileStore<T> : IDocumentStore<T>, IDisposable where T : 
 
     public Task<int> CountAsync(Func<T, bool>? filter = null, CancellationToken ct = default)
     {
-        var snapshot = _items;
+        var snapshot = GetCurrentItems();
         var count = filter is null ? snapshot.Count : snapshot.Values.Count(filter);
         return Task.FromResult(count);
     }
 
     public Task<T?> GetAsync(string id, CancellationToken ct = default)
-        => Task.FromResult(_items.TryGetValue(id, out var doc) ? Clone(doc) : null);
+        => Task.FromResult(GetCurrentItems().TryGetValue(id, out var doc) ? Clone(doc) : null);
 
     public async Task<T> UpsertAsync(T document, int? expectedVersion = null, CancellationToken ct = default)
     {
@@ -98,11 +131,15 @@ public sealed class JsonFileStore<T> : IDocumentStore<T>, IDisposable where T : 
         }
     }
 
-    private ImmutableDictionary<string, T> Load()
+    private ImmutableDictionary<string, T> Load(out long lastWriteTicks)
     {
         if (!File.Exists(_filePath))
+        {
+            lastWriteTicks = 0;
             return ImmutableDictionary<string, T>.Empty.WithComparers(StringComparer.Ordinal);
+        }
 
+        lastWriteTicks = File.GetLastWriteTimeUtc(_filePath).Ticks;
         using var stream = File.OpenRead(_filePath);
         var file = JsonSerializer.Deserialize<CollectionFile<T>>(stream, JsonDefaults.Storage)
                    ?? throw new InvalidDataException($"Collection file '{_filePath}' is empty or invalid.");
@@ -132,6 +169,7 @@ public sealed class JsonFileStore<T> : IDocumentStore<T>, IDisposable where T : 
         }
 
         File.Move(tempPath, _filePath, overwrite: true);
+        Interlocked.Exchange(ref _lastWriteTicks, File.GetLastWriteTimeUtc(_filePath).Ticks);
     }
 
     private static T Clone(T source)

@@ -14,6 +14,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { api } from '../../api/client';
+import { RegionSelector } from '../region/RegionSelector';
 
 export const AdminLayout: React.FC = () => {
   const queryClient = useQueryClient();
@@ -175,6 +176,7 @@ export const AdminLayout: React.FC = () => {
           </nav>
 
           <div className="flex items-center gap-2">
+            <RegionSelector />
             <Link
               to="/"
               className="inline-flex items-center gap-1 rounded-full border border-stone-300 px-3 py-1.5 text-xs font-medium text-stone-700 hover:border-stone-500"

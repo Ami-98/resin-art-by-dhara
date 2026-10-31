@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   Clock,
   ExternalLink,
-  Info,
   MessageCircle,
   ShieldCheck,
   Sparkles,
@@ -25,6 +24,70 @@ import type {
 } from '../../api/types';
 import { formatMoney } from '../../lib/money';
 import { useRegion } from '../region/RegionContext';
+
+function renderInlineFormatting(text: string): React.ReactNode[] {
+  const cleaned = text.replace(/`([^`]+)`/g, '$1');
+  const tokens = cleaned.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+  return tokens.map((token, idx) => {
+    if (token.startsWith('**') && token.endsWith('**') && token.length > 4) {
+      return (
+        <strong key={idx} className="font-bold text-[#161118]">
+          {token.slice(2, -2)}
+        </strong>
+      );
+    }
+    if (token.startsWith('*') && token.endsWith('*') && token.length > 2) {
+      return <em key={idx}>{token.slice(1, -1)}</em>;
+    }
+    return token;
+  });
+}
+
+function renderFormattedDescription(description: string): React.ReactNode {
+  const lines = description
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(
+      (l) =>
+        !/original instagram post/i.test(l) &&
+        !/instagram\.com\/p\//i.test(l)
+    );
+
+  const blocks: React.ReactNode[] = [];
+  let currentBullets: string[] = [];
+
+  const flushBullets = (keyPrefix: string) => {
+    if (currentBullets.length === 0) return;
+    blocks.push(
+      <ul key={keyPrefix} className="mt-2.5 list-disc space-y-1.5 pl-5">
+        {currentBullets.map((item, i) => (
+          <li key={i}>{renderInlineFormatting(item)}</li>
+        ))}
+      </ul>
+    );
+    currentBullets = [];
+  };
+
+  lines.forEach((line, idx) => {
+    if (!line) {
+      flushBullets(`ul-${idx}`);
+      return;
+    }
+    if (line.startsWith('- ') || line.startsWith('• ')) {
+      currentBullets.push(line.slice(2).trim());
+    } else {
+      flushBullets(`ul-${idx}`);
+      blocks.push(
+        <p key={`p-${idx}`} className={blocks.length > 0 ? 'mt-2.5' : ''}>
+          {renderInlineFormatting(line)}
+        </p>
+      );
+    }
+  });
+
+  flushBullets('ul-end');
+  return blocks;
+}
 
 export const ProductDetail: React.FC = () => {
   const { slug = '' } = useParams<{ slug: string }>();
@@ -62,6 +125,8 @@ export const ProductDetail: React.FC = () => {
 
   useEffect(() => {
     if (!product) return;
+    const siteTitle = bootstrap?.business.name ?? 'Resin Delights by Dhara';
+    document.title = `${product.name} | ${siteTitle}`;
     setActiveImageIdx(0);
     const initial: Record<string, OptionSelectionInput> = {};
     for (const opt of product.options) {
@@ -226,9 +291,6 @@ export const ProductDetail: React.FC = () => {
         >
           <ArrowLeft className="h-3.5 w-3.5" /> Back to collection
         </Link>
-        <span>
-          Region: <strong className="text-[#161118]">{regionDef.flag} {regionDef.name}</strong> ({product.currency})
-        </span>
       </div>
 
       <div className="grid gap-10 lg:grid-cols-12">
@@ -265,8 +327,8 @@ export const ProductDetail: React.FC = () => {
           {/* Description & Craft Notes */}
           <div className="mt-8 rounded-2xl border border-[#EADCE0] bg-white p-6 shadow-luxe">
             <h2 className="text-xl font-bold text-[#161118]">About This Piece</h2>
-            <div className="mt-3 whitespace-pre-line text-sm leading-relaxed text-[#4A3E47]">
-              {product.description}
+            <div className="mt-3 text-sm leading-relaxed text-[#4A3E47]">
+              {renderFormattedDescription(product.description)}
             </div>
             <div className="mt-5 flex flex-wrap gap-2">
               {product.tags.map((t) => (
@@ -307,7 +369,7 @@ export const ProductDetail: React.FC = () => {
                 <div className="flex items-baseline justify-between">
                   <div>
                     <span className="text-xs font-semibold uppercase tracking-wider text-[#5E3758]">
-                      Estimated Total ({regionDef.name})
+                      Estimated Total
                     </span>
                     <div className="mt-0.5 flex items-baseline gap-2">
                       <span className="tabular-price text-3xl font-bold text-[#161118]">
@@ -563,13 +625,13 @@ export const ProductDetail: React.FC = () => {
                   className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-emerald-700 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800"
                 >
                   <MessageCircle className="h-4 w-4" />
-                  Save Custom Quote &amp; Order on WhatsApp
+                  Order on WhatsApp
                 </button>
                 <Link
                   to={`/contact?product=${encodeURIComponent(product.slug)}`}
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-stone-300 bg-white px-5 py-3.5 text-xs font-semibold text-stone-800 hover:border-amber-800"
                 >
-                  General Enquiry
+                  Ask a Question
                 </Link>
               </div>
             ) : (
@@ -710,17 +772,13 @@ export const ProductDetail: React.FC = () => {
             <div className="mt-5 grid grid-cols-2 gap-3 border-t border-stone-100 pt-4 text-[11px] text-stone-500">
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-4 w-4 text-amber-800 shrink-0" />
-                Hand-poured in Gujarat, India
+                Handmade in Gujarat, India
               </div>
               <div className="flex items-center gap-1.5">
                 <ShieldCheck className="h-4 w-4 text-amber-800 shrink-0" />
-                Final price confirmed with your delivery address
+                Final price confirmed on WhatsApp
               </div>
             </div>
-            <p className="mt-2 flex items-start gap-1 text-[11px] text-stone-400">
-              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              Share this page on WhatsApp or Instagram — rich product preview tags are generated automatically by the server.
-            </p>
           </div>
         </div>
       </div>

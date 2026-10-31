@@ -16,7 +16,7 @@ import type { LeadSubmissionResponse } from '../../api/types';
 import { useRegion } from '../region/RegionContext';
 
 export const ContactPage: React.FC = () => {
-  const { region, regionDef, bootstrap } = useRegion();
+  const { region, bootstrap } = useRegion();
   const [params] = useSearchParams();
   const location = useLocation();
   const productSlug = params.get('product') ?? '';
@@ -71,24 +71,20 @@ export const ContactPage: React.FC = () => {
         <div className="lg:col-span-5">
           <div className="bg-obsidian-luxe rounded-3xl border border-[#C99B3B]/40 p-7 text-[#FAF7F4] shadow-luxe">
             <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#F3E5AB]">
-              Gujarat Studio · Personal Consultation
+              Gujarat Studio · Chat with Us
             </span>
             <h1 className="mt-2 text-3xl font-bold text-white">
-              Let&rsquo;s craft your resin piece together
+              Let&rsquo;s plan your custom resin piece
             </h1>
             <p className="mt-3 text-sm leading-relaxed text-[#E5D7DF]">
-              Fill in your contact details and you will be redirected straight to WhatsApp with a
-              pre-filled <strong>&ldquo;Hi&rdquo;</strong> message so Dhara can assist you with
-              design options, flower preservation instructions, and delivery timelines for{' '}
-              <strong className="text-[#F3E5AB]">
-                {regionDef.flag} {regionDef.name}
-              </strong>
-              .
+              Share your contact details below and we will open WhatsApp with a ready{' '}
+              <strong>&ldquo;Hi&rdquo;</strong> message so Dhara can help you with colors, flower
+              preservation steps, and delivery dates.
             </p>
 
             {productSlug && (
               <div className="mt-5 rounded-2xl border border-[#C99B3B]/40 bg-[#5E3758]/40 p-3.5 text-xs text-[#F4C2D7]">
-                Enquiring about:{' '}
+                Asking about:{' '}
                 <strong className="capitalize text-white">
                   {productSlug.replace(/-/g, ' ')}
                 </strong>
@@ -98,7 +94,7 @@ export const ContactPage: React.FC = () => {
             <div className="mt-6 space-y-3 border-t border-[#C99B3B]/25 pt-5 text-xs text-[#D5C5CE]">
               <div className="flex items-center gap-2.5">
                 <MapPin className="h-4 w-4 text-[#F3E5AB] shrink-0" />
-                <span>Hand-poured in Gujarat, India · Insured shipping to India, USA &amp; Canada</span>
+                <span>Handmade in Gujarat, India · Safe shipping to India, USA &amp; Canada</span>
               </div>
               {bootstrap?.business.contactEmail && (
                 <div className="flex items-center gap-2.5">
@@ -108,7 +104,7 @@ export const ContactPage: React.FC = () => {
               )}
               <div className="flex items-center gap-2.5">
                 <ShieldCheck className="h-4 w-4 text-[#F3E5AB] shrink-0" />
-                <span>Your details are saved securely so our studio can follow up on your order.</span>
+                <span>Your details are kept private and used only to help with your order.</span>
               </div>
             </div>
           </div>
@@ -140,9 +136,9 @@ export const ContactPage: React.FC = () => {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                 <div>
-                  <h2 className="text-2xl font-bold text-stone-900">Contact &amp; WhatsApp Enquiry</h2>
+                  <h2 className="text-2xl font-bold text-stone-900">Contact &amp; WhatsApp Chat</h2>
                   <p className="mt-1 text-xs text-stone-500">
-                    Active region: <strong>{regionDef.flag} {regionDef.name} ({regionDef.currency})</strong>
+                    Share your details below to connect directly with our studio on WhatsApp.
                   </p>
                 </div>
 

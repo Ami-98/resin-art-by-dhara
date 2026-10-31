@@ -8,6 +8,7 @@ import { ProductGallery } from './features/catalog/ProductGallery';
 import { ProductDetail } from './features/catalog/ProductDetail';
 import { ContactPage } from './features/contact/ContactPage';
 import { PrivacyPage } from './features/legal/PrivacyPage';
+import { OurStoryPage } from './features/story/OurStoryPage';
 import { AdminDashboardPage, AdminLayout } from './features/admin/AdminLayout';
 import { AdminProductsPage } from './features/admin/AdminProductsPage';
 import { AdminPricingPage } from './features/admin/AdminPricingPage';
@@ -35,6 +36,7 @@ export const App: React.FC = () => {
               <Route path="products/:slug" element={<ProductDetail />} />
               <Route path="custom" element={<ProductGallery fixedType="custom" />} />
               <Route path="custom/:slug" element={<ProductDetail />} />
+              <Route path="our-story" element={<OurStoryPage />} />
               <Route path="contact" element={<ContactPage />} />
               <Route path="privacy" element={<PrivacyPage />} />
             </Route>

@@ -22,6 +22,7 @@ interface RegionContextValue {
   isLocating: boolean;
   locationMessage?: string | null;
   setRegionManual: (code: RegionCode) => void;
+  resetToAutoRegion: () => void;
   detectWithBrowserGeolocation: () => Promise<void>;
 }
 
@@ -83,13 +84,14 @@ export const RegionProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     staleTime: 5 * 60 * 1000,
   });
 
-  // First-visit auto-detection (IP -> timezone -> config default). Never overrides a manual choice.
+  // Auto-detection (IP -> timezone -> config default).
+  // Only an admin override ('manual') persists across sessions; public visitors cannot manually switch regions.
   useEffect(() => {
     if (!bootstrap) return;
     const stored = readStoredRegion();
     const validCodes = new Set(bootstrap.regions.map((r) => r.code));
 
-    if (stored && validCodes.has(stored.code)) {
+    if (stored && stored.source === 'manual' && validCodes.has(stored.code)) {
       setRegion(stored.code);
       setSource(stored.source);
       return;
@@ -124,6 +126,35 @@ export const RegionProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setSource('manual');
     setLocationMessage(null);
     writeStoredRegion(next);
+  };
+
+  const resetToAutoRegion = () => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+    if (!bootstrap) return;
+    const validCodes = new Set(bootstrap.regions.map((r) => r.code));
+    if (bootstrap.suggestedRegion && validCodes.has(bootstrap.suggestedRegion)) {
+      const next: StoredRegion = { code: bootstrap.suggestedRegion, source: 'ip' };
+      setRegion(next.code);
+      setSource(next.source);
+      writeStoredRegion(next);
+      return;
+    }
+    const tzGuess = guessFromTimezone(bootstrap.regions);
+    if (tzGuess && validCodes.has(tzGuess)) {
+      const next: StoredRegion = { code: tzGuess, source: 'timezone' };
+      setRegion(next.code);
+      setSource(next.source);
+      writeStoredRegion(next);
+      return;
+    }
+    const fallback: StoredRegion = { code: bootstrap.defaultRegion, source: 'default' };
+    setRegion(fallback.code);
+    setSource(fallback.source);
+    writeStoredRegion(fallback);
   };
 
   const detectWithBrowserGeolocation = async () => {
@@ -173,6 +204,7 @@ export const RegionProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         isLocating,
         locationMessage,
         setRegionManual,
+        resetToAutoRegion,
         detectWithBrowserGeolocation,
       }}
     >
