@@ -86,7 +86,8 @@ public sealed partial class LeadService(
             SummaryText: doc.Message,
             CreatedAt: now));
 
-        var whatsappUrl = businessOptions.CurrentValue.WhatsApp.BuildUrl(reference);
+        var whatsappMessage = BuildContactWhatsAppMessage(doc);
+        var whatsappUrl = businessOptions.CurrentValue.WhatsApp.BuildUrlWithText(whatsappMessage);
         return new LeadSubmissionResponse(doc.Id, reference, whatsappUrl, null);
     }
 
@@ -218,8 +219,89 @@ public sealed partial class LeadService(
             SummaryText: $"{snapshot.Currency} {snapshot.Total / 100m:0.00}",
             CreatedAt: now));
 
-        var whatsappUrl = businessOptions.CurrentValue.WhatsApp.BuildUrl(reference);
+        var whatsappMessage = BuildCustomRequestWhatsAppMessage(doc);
+        var whatsappUrl = businessOptions.CurrentValue.WhatsApp.BuildUrlWithText(whatsappMessage);
         return new LeadSubmissionResponse(doc.Id, reference, whatsappUrl, snapshot);
+    }
+
+    private string BuildContactWhatsAppMessage(ContactDocument doc)
+    {
+        var wa = businessOptions.CurrentValue.WhatsApp;
+        var greeting = string.IsNullOrWhiteSpace(wa.DefaultMessage)
+            ? "Hi, I'm interested in Resin art"
+            : wa.DefaultMessage.Trim();
+
+        var lines = new List<string>
+        {
+            greeting,
+            "",
+            $"Name: {doc.Name}",
+            $"Phone: {doc.Phone}",
+            $"Email: {doc.Email}"
+        };
+
+        if (!string.IsNullOrWhiteSpace(doc.Address))
+            lines.Add($"Address: {doc.Address}");
+
+        if (!string.IsNullOrWhiteSpace(doc.SelectedRegion))
+            lines.Add($"Region: {doc.SelectedRegion}");
+
+        var productLabel = doc.ProductName ?? doc.ProductSlug;
+        if (!string.IsNullOrWhiteSpace(productLabel))
+            lines.Add($"Product: {productLabel}");
+
+        if (!string.IsNullOrWhiteSpace(doc.Message))
+            lines.Add($"Notes: {doc.Message}");
+
+        if (!string.IsNullOrWhiteSpace(doc.Reference))
+            lines.Add($"Ref: {doc.Reference}");
+
+        return string.Join("\n", lines);
+    }
+
+    private string BuildCustomRequestWhatsAppMessage(CustomRequestDocument doc)
+    {
+        var wa = businessOptions.CurrentValue.WhatsApp;
+        var greeting = string.IsNullOrWhiteSpace(wa.DefaultMessage)
+            ? "Hi, I'm interested in Resin art"
+            : wa.DefaultMessage.Trim();
+
+        var lines = new List<string>
+        {
+            greeting,
+            "",
+            $"Name: {doc.Contact.Name}",
+            $"Phone: {doc.Contact.Phone}",
+            $"Email: {doc.Contact.Email}"
+        };
+
+        if (!string.IsNullOrWhiteSpace(doc.Contact.Address))
+            lines.Add($"Address: {doc.Contact.Address}");
+
+        if (!string.IsNullOrWhiteSpace(doc.SelectedRegion))
+            lines.Add($"Region: {doc.SelectedRegion}");
+
+        lines.Add($"Product: {doc.ProductNameSnapshot}");
+
+        foreach (var sel in doc.Selections)
+        {
+            var val = sel.ChoiceLabel ?? sel.Value ?? (sel.Provided == true ? "Yes" : null);
+            if (!string.IsNullOrWhiteSpace(val))
+                lines.Add($"• {sel.OptionLabel}: {val}");
+        }
+
+        if (doc.Extras.Count > 0)
+            lines.Add($"Extras: {string.Join(", ", doc.Extras)}");
+
+        lines.Add($"Estimated Quote: {doc.Quote.Currency} {doc.Quote.Total / 100m:0.00}");
+
+        if (!string.IsNullOrWhiteSpace(doc.Notes))
+            lines.Add($"Notes: {doc.Notes}");
+
+        if (!string.IsNullOrWhiteSpace(doc.Reference))
+            lines.Add($"Ref: {doc.Reference}");
+
+        return string.Join("\n", lines);
     }
 
     public static Dictionary<string, string[]> ValidateContactFields(

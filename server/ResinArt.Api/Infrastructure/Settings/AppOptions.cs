@@ -31,14 +31,14 @@ public sealed class BusinessOptions
 public sealed class WhatsAppOptions
 {
     /// <summary>International format, digits only (e.g. 919812345678).</summary>
-    [Required, RegularExpression(@"^\d{8,15}$", ErrorMessage = "WhatsApp number must be 8-15 digits in international format without '+'.")]
+    [Required, RegularExpression(@"^\+?\d{8,15}$", ErrorMessage = "WhatsApp number must be 8-15 digits in international format.")]
     public string Number { get; set; } = "910000000000";
 
     [Required, Url]
     public string BaseUrl { get; set; } = "https://wa.me/";
 
     [Required, StringLength(200)]
-    public string DefaultMessage { get; set; } = "Hi";
+    public string DefaultMessage { get; set; } = "Hi, I'm interested in Resin art";
 
     public bool IncludeReference { get; set; }
 
@@ -47,13 +47,25 @@ public sealed class WhatsAppOptions
     public string CustomerReplyTemplate { get; set; } =
         "Hi {name}, this is {owner} from {business} regarding your enquiry ({reference}).";
 
+    private string CleanNumber()
+    {
+        var digits = new string((Number ?? "").Where(char.IsDigit).ToArray());
+        return string.IsNullOrEmpty(digits) ? (Number ?? "").TrimStart('+') : digits;
+    }
+
     /// <summary>Builds the wa.me link with the URL-encoded message.</summary>
     public string BuildUrl(string? reference = null)
     {
         var message = IncludeReference && !string.IsNullOrWhiteSpace(reference)
             ? $"{DefaultMessage} (Ref {reference})"
             : DefaultMessage;
-        return $"{BaseUrl.TrimEnd('/')}/{Number}?text={Uri.EscapeDataString(message)}";
+        return BuildUrlWithText(message);
+    }
+
+    /// <summary>Builds the wa.me link with a custom pre-filled message.</summary>
+    public string BuildUrlWithText(string message)
+    {
+        return $"{BaseUrl.TrimEnd('/')}/{CleanNumber()}?text={Uri.EscapeDataString(message)}";
     }
 }
 

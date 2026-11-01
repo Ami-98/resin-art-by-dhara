@@ -102,7 +102,7 @@ const FAQS = [
 ];
 
 export const OurStoryPage: React.FC = () => {
-  const { bootstrap } = useRegion();
+  const { bootstrap, activeWhatsAppUrl } = useRegion();
   const location = useLocation();
   const [slideIdx, setSlideIdx] = useState(0);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -116,7 +116,7 @@ export const OurStoryPage: React.FC = () => {
       .split('/')
       .pop()
       ?.replace(/^@/, '') || 'resin_delights_by_dhara';
-  const whatsAppUrl = bootstrap?.business.whatsAppUrl || 'https://wa.me/919714503584';
+  const whatsAppUrl = activeWhatsAppUrl;
 
   useEffect(() => {
     document.title = `Our Story & Craft | ${bizName}`;

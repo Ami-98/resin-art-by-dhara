@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import {
   AlertCircle,
@@ -16,7 +16,7 @@ import type { LeadSubmissionResponse } from '../../api/types';
 import { useRegion } from '../region/RegionContext';
 
 export const ContactPage: React.FC = () => {
-  const { region, bootstrap } = useRegion();
+  const { region, bootstrap, setCustomWhatsAppUrl, buildWhatsAppUrlWithText } = useRegion();
   const [params] = useSearchParams();
   const location = useLocation();
   const productSlug = params.get('product') ?? '';
@@ -34,6 +34,37 @@ export const ContactPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState<LeadSubmissionResponse | null>(null);
+
+  const buildDraftWhatsAppUrl = () => {
+    const lines = ["Hi, I'm interested in Resin art"];
+    const hasDetails = Boolean(
+      name.trim() || phone.trim() || email.trim() || address.trim() || productSlug || message.trim()
+    );
+    if (hasDetails) {
+      lines.push('');
+      if (name.trim()) lines.push(`Name: ${name.trim()}`);
+      if (phone.trim()) lines.push(`Phone: ${phone.trim()}`);
+      if (email.trim()) lines.push(`Email: ${email.trim()}`);
+      if (address.trim()) lines.push(`Address: ${address.trim()}`);
+      if (region) lines.push(`Region: ${region}`);
+      if (productSlug) lines.push(`Product: ${productSlug.replace(/-/g, ' ')}`);
+      if (message.trim()) lines.push(`Notes: ${message.trim()}`);
+    }
+    return buildWhatsAppUrlWithText(lines.join('\n'));
+  };
+
+  useEffect(() => {
+    if (submitted?.whatsappUrl) {
+      setCustomWhatsAppUrl(submitted.whatsappUrl);
+      return;
+    }
+    const hasDetails = Boolean(
+      name.trim() || phone.trim() || email.trim() || address.trim() || productSlug || message.trim()
+    );
+    if (hasDetails) {
+      setCustomWhatsAppUrl(buildDraftWhatsAppUrl());
+    }
+  }, [name, phone, email, address, productSlug, message, region, submitted]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +86,8 @@ export const ContactPage: React.FC = () => {
       });
 
       setSubmitted(result);
-      // Redirect the client to WhatsApp with the pre-filled "Hi" message
+      setCustomWhatsAppUrl(result.whatsappUrl);
+      // Redirect the client to WhatsApp with the pre-filled message including form details
       window.location.assign(result.whatsappUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not submit your enquiry. Please try again.');
@@ -77,9 +109,9 @@ export const ContactPage: React.FC = () => {
               Let&rsquo;s plan your custom resin piece
             </h1>
             <p className="mt-3 text-sm leading-relaxed text-[#E5D7DF]">
-              Share your contact details below and we will open WhatsApp with a ready{' '}
-              <strong>&ldquo;Hi&rdquo;</strong> message so Dhara can help you with colors, flower
-              preservation steps, and delivery dates.
+              Share your contact details below and we will open WhatsApp with your name, notes, and
+              enquiry details pre-filled so Dhara knows who is messaging and can help you with
+              colors, flower preservation steps, and delivery dates.
             </p>
 
             {productSlug && (
@@ -129,7 +161,7 @@ export const ContactPage: React.FC = () => {
                   rel="noopener noreferrer"
                   className="mt-6 inline-flex items-center gap-2 rounded-full bg-emerald-700 px-6 py-3.5 text-sm font-semibold text-white hover:bg-emerald-800"
                 >
-                  <MessageCircle className="h-4 w-4" /> Open WhatsApp (&ldquo;Hi&rdquo;)
+                  <MessageCircle className="h-4 w-4" /> Open WhatsApp with My Details
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               </div>
@@ -152,7 +184,7 @@ export const ContactPage: React.FC = () => {
                           <p className="mt-1">
                             Having trouble?{' '}
                             <a
-                              href={bootstrap.business.whatsAppUrl}
+                              href={buildDraftWhatsAppUrl()}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="font-semibold underline"
@@ -295,7 +327,7 @@ export const ContactPage: React.FC = () => {
                   <MessageCircle className="h-4 w-4" />
                   {isSubmitting
                     ? 'Saving & Redirecting to WhatsApp…'
-                    : 'Submit & Chat on WhatsApp ("Hi")'}
+                    : 'Submit & Chat on WhatsApp'}
                 </button>
               </form>
             )}

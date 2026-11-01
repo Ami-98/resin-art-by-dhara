@@ -11,6 +11,9 @@ interface StoredRegion {
 }
 
 const STORAGE_KEY = 'resinart.region.v1';
+const WHATSAPP_URL_SESSION_KEY = 'resinart.whatsapp.url.v1';
+const DEFAULT_WHATSAPP_FALLBACK =
+  "https://wa.me/14378180411?text=Hi%2C%20I'm%20interested%20in%20Resin%20art";
 
 interface RegionContextValue {
   region: RegionCode;
@@ -21,6 +24,9 @@ interface RegionContextValue {
   isLoading: boolean;
   isLocating: boolean;
   locationMessage?: string | null;
+  activeWhatsAppUrl: string;
+  setCustomWhatsAppUrl: (url: string | null) => void;
+  buildWhatsAppUrlWithText: (text: string) => string;
   setRegionManual: (code: RegionCode) => void;
   resetToAutoRegion: () => void;
   detectWithBrowserGeolocation: () => Promise<void>;
@@ -77,6 +83,23 @@ export const RegionProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [source, setSource] = useState<RegionSource>(initialStored?.source ?? 'default');
   const [isLocating, setIsLocating] = useState(false);
   const [locationMessage, setLocationMessage] = useState<string | null>(null);
+  const [customWhatsAppUrl, setCustomWhatsAppUrlState] = useState<string | null>(() => {
+    try {
+      return sessionStorage.getItem(WHATSAPP_URL_SESSION_KEY);
+    } catch {
+      return null;
+    }
+  });
+
+  const setCustomWhatsAppUrl = (url: string | null) => {
+    setCustomWhatsAppUrlState(url);
+    try {
+      if (url) sessionStorage.setItem(WHATSAPP_URL_SESSION_KEY, url);
+      else sessionStorage.removeItem(WHATSAPP_URL_SESSION_KEY);
+    } catch {
+      // ignore storage errors
+    }
+  };
 
   const { data: bootstrap, isLoading } = useQuery({
     queryKey: ['bootstrap'],
@@ -192,6 +215,14 @@ export const RegionProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const regions = bootstrap?.regions ?? [FALLBACK_REGION];
   const regionDef = regions.find((r) => r.code === region) ?? regions[0] ?? FALLBACK_REGION;
 
+  const baseWhatsAppUrl = bootstrap?.business.whatsAppUrl || DEFAULT_WHATSAPP_FALLBACK;
+  const activeWhatsAppUrl = customWhatsAppUrl || baseWhatsAppUrl;
+
+  const buildWhatsAppUrlWithText = (text: string) => {
+    const baseWithoutQuery = baseWhatsAppUrl.split('?')[0];
+    return `${baseWithoutQuery}?text=${encodeURIComponent(text)}`;
+  };
+
   return (
     <RegionContext.Provider
       value={{
@@ -203,6 +234,9 @@ export const RegionProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         isLoading,
         isLocating,
         locationMessage,
+        activeWhatsAppUrl,
+        setCustomWhatsAppUrl,
+        buildWhatsAppUrlWithText,
         setRegionManual,
         resetToAutoRegion,
         detectWithBrowserGeolocation,

@@ -91,7 +91,7 @@ function renderFormattedDescription(description: string): React.ReactNode {
 
 export const ProductDetail: React.FC = () => {
   const { slug = '' } = useParams<{ slug: string }>();
-  const { region, regionDef, bootstrap } = useRegion();
+  const { region, regionDef, bootstrap, setCustomWhatsAppUrl } = useRegion();
 
   const {
     data: product,
@@ -237,6 +237,7 @@ export const ProductDetail: React.FC = () => {
       });
 
       setSubmitted(result);
+      setCustomWhatsAppUrl(result.whatsappUrl);
       window.location.assign(result.whatsappUrl);
     } catch (err) {
       setSubmitError(
@@ -613,7 +614,7 @@ export const ProductDetail: React.FC = () => {
                   rel="noopener noreferrer"
                   className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-700 px-6 py-3 text-xs font-semibold text-white hover:bg-emerald-800"
                 >
-                  <MessageCircle className="h-4 w-4" /> Continue to WhatsApp (&ldquo;Hi&rdquo;)
+                  <MessageCircle className="h-4 w-4" /> Continue to WhatsApp with My Order Details
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               </div>
@@ -764,7 +765,7 @@ export const ProductDetail: React.FC = () => {
                   <MessageCircle className="h-4 w-4" />
                   {isSubmitting
                     ? 'Saving Quote & Opening WhatsApp…'
-                    : 'Submit Custom Request & Open WhatsApp ("Hi")'}
+                    : 'Submit Custom Request & Open WhatsApp'}
                 </button>
               </form>
             )}

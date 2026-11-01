@@ -5,14 +5,12 @@ import { useRegion } from '../features/region/RegionContext';
 import { BrandLogoMark, RoseWatermarkBadge } from './BrandLogo';
 
 export const AppLayout: React.FC = () => {
-  const { bootstrap } = useRegion();
+  const { bootstrap, activeWhatsAppUrl } = useRegion();
   const bizName = bootstrap?.business.name ?? 'Resin Delights by Dhara';
   const tagline = bootstrap?.business.tagline ?? 'Nadiad, Gujarat · Preserving Memories in Resin';
   const studioLocation = bootstrap?.business.location ?? 'Nadiad & Uttarsanda, Gujarat, India';
   const contactEmail = bootstrap?.business.contactEmail || 'resinartbydhara@gmail.com';
-  const whatsAppUrl =
-    bootstrap?.business.whatsAppUrl ||
-    'https://wa.me/919714503584?text=Hi!%20I%27m%20interested%20in%20your%20handcrafted%20resin%20art.';
+  const whatsAppUrl = activeWhatsAppUrl;
   const instagramUrl =
     bootstrap?.business.social?.instagram || 'https://www.instagram.com/resin_delights_by_dhara/';
   const instagramHandle =

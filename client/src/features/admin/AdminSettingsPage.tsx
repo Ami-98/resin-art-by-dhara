@@ -84,8 +84,9 @@ export const AdminSettingsPage: React.FC = () => {
     return <div className="p-8 text-sm text-stone-500">Loading configuration…</div>;
   }
 
+  const cleanWaNumber = form.business.whatsApp.number.replace(/\D/g, '');
   const previewWhatsAppUrl = `${form.business.whatsApp.baseUrl.replace(/\/$/, '')}/${
-    form.business.whatsApp.number
+    cleanWaNumber || form.business.whatsApp.number
   }?text=${encodeURIComponent(
     form.business.whatsApp.includeReference
       ? `${form.business.whatsApp.defaultMessage} (Ref RA-C-2026-0101)`
@@ -253,7 +254,7 @@ export const AdminSettingsPage: React.FC = () => {
                 }
                 className="h-4 w-4 accent-amber-800"
               />
-              Append lead reference code to the &ldquo;Hi&rdquo; message
+              Append lead reference code to the default WhatsApp message
             </label>
 
             <div>

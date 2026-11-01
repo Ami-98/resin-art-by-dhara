@@ -8,7 +8,7 @@ import { useRegion } from '../region/RegionContext';
 import { ProductCard } from './ProductCard';
 
 export const HomePage: React.FC = () => {
-  const { region, bootstrap } = useRegion();
+  const { region, bootstrap, activeWhatsAppUrl } = useRegion();
 
   const instagramUrl =
     bootstrap?.business.social?.instagram || 'https://www.instagram.com/resin_delights_by_dhara/';
@@ -243,9 +243,9 @@ export const HomePage: React.FC = () => {
               >
                 <HeartHandshake className="h-4 w-4" /> Start a Custom Order
               </Link>
-              {bootstrap?.business.whatsAppUrl && (
+              {activeWhatsAppUrl && (
                 <a
-                  href={bootstrap.business.whatsAppUrl}
+                  href={activeWhatsAppUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-full border border-[#D98A9E]/40 bg-[#5E3758]/40 px-5 py-3 text-xs font-bold text-white transition hover:border-[#F3E5AB]"
