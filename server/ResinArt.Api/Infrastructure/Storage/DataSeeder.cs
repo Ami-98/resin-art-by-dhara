@@ -43,6 +43,31 @@ public static class DataSeeder
                 await productStore.UpsertAsync(product, ct: ct);
             logger.LogInformation("Seeded {Count} sample products.", products.Count);
         }
+
+        await RemoveRetiredOptionsAsync(productStore, logger, ct);
+    }
+
+    /// <summary>
+    /// Option ids that have been retired from the catalogue. Products persisted by an earlier seed
+    /// (seeding only runs on an empty store) still carry them, so they are stripped on startup.
+    /// </summary>
+    private static readonly HashSet<string> RetiredOptionIds = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "opt_gold_edge" // "24k Gold-Leaf Hand-Painted Rim" (+10%) on the engagement ring platter
+    };
+
+    private static async Task RemoveRetiredOptionsAsync(
+        IDocumentStore<ProductDocument> productStore, ILogger logger, CancellationToken ct)
+    {
+        var affected = await productStore.QueryAsync(
+            p => p.Options is not null && p.Options.Any(o => RetiredOptionIds.Contains(o.Id)), ct);
+
+        foreach (var product in affected)
+        {
+            product.Options = product.Options.Where(o => !RetiredOptionIds.Contains(o.Id)).ToList();
+            await productStore.UpsertAsync(product, ct: ct);
+            logger.LogInformation("Removed retired option(s) from product {ProductId}.", product.Id);
+        }
     }
 
     private static void CopySeedImages(string contentRoot, string uploadsRoot, ILogger logger)
