@@ -13,7 +13,7 @@ interface StoredRegion {
 const STORAGE_KEY = 'resinart.region.v1';
 const WHATSAPP_URL_SESSION_KEY = 'resinart.whatsapp.url.v1';
 const DEFAULT_WHATSAPP_FALLBACK =
-  "https://wa.me/14378180411?text=Hi%2C%20I'm%20interested%20in%20Resin%20art";
+  "https://wa.me/14378180411?text=%E2%9C%A8%20Hi%20Dhara!%20I'm%20interested%20in%20your%20handcrafted%20Resin%20Art%20and%20would%20love%20to%20know%20more.%20%F0%9F%8C%B8";
 
 interface RegionContextValue {
   region: RegionCode;

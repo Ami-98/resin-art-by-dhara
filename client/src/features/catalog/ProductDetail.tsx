@@ -602,7 +602,7 @@ export const ProductDetail: React.FC = () => {
               <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5 text-center">
                 <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-700" />
                 <h3 className="mt-2 text-xl font-bold text-stone-900">
-                  Custom Request Saved ({submitted.reference})
+                  Custom Request Saved
                 </h3>
                 <p className="mt-1 text-xs text-stone-600">
                   Your customization and price quote have been logged for Dhara. Click below if

@@ -35,20 +35,39 @@ export const ContactPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState<LeadSubmissionResponse | null>(null);
 
+  const formatRegionLabel = (code: string) => {
+    const upper = code.toUpperCase();
+    if (upper === 'GJ-IN') return 'India';
+    if (upper === 'US') return 'United States';
+    if (upper === 'CA') return 'Canada';
+    return code;
+  };
+
   const buildDraftWhatsAppUrl = () => {
-    const lines = ["Hi, I'm interested in Resin art"];
+    const lines = ["✨ *Hi Dhara! I'm interested in your handcrafted Resin Art.* 🌸"];
     const hasDetails = Boolean(
       name.trim() || phone.trim() || email.trim() || address.trim() || productSlug || message.trim()
     );
     if (hasDetails) {
-      lines.push('');
-      if (name.trim()) lines.push(`Name: ${name.trim()}`);
-      if (phone.trim()) lines.push(`Phone: ${phone.trim()}`);
-      if (email.trim()) lines.push(`Email: ${email.trim()}`);
-      if (address.trim()) lines.push(`Address: ${address.trim()}`);
-      if (region) lines.push(`Region: ${region}`);
-      if (productSlug) lines.push(`Product: ${productSlug.replace(/-/g, ' ')}`);
-      if (message.trim()) lines.push(`Notes: ${message.trim()}`);
+      lines.push('', 'Here are my details:');
+      if (name.trim()) lines.push(`👤 *Name:* ${name.trim()}`);
+      if (phone.trim()) lines.push(`📞 *Phone:* ${phone.trim()}`);
+      if (email.trim()) lines.push(`✉️ *Email:* ${email.trim()}`);
+      const regionLabel = formatRegionLabel(region);
+      if (address.trim()) {
+        const loc =
+          regionLabel && !address.toLowerCase().includes(regionLabel.toLowerCase())
+            ? `${address.trim()} (${regionLabel})`
+            : address.trim();
+        lines.push(`📍 *Location:* ${loc}`);
+      } else if (regionLabel) {
+        lines.push(`📍 *Location:* ${regionLabel}`);
+      }
+      if (productSlug) lines.push(`🎨 *Interested In:* ${productSlug.replace(/-/g, ' ')}`);
+      if (message.trim()) {
+        lines.push('', '💬 *My Notes / Idea:*', `"${message.trim()}"`);
+      }
+      lines.push('', 'Looking forward to planning my custom piece with you! 💛');
     }
     return buildWhatsAppUrlWithText(lines.join('\n'));
   };
@@ -152,8 +171,7 @@ export const ContactPage: React.FC = () => {
                   Details saved · Opening WhatsApp…
                 </h2>
                 <p className="mt-1 text-sm text-stone-600">
-                  Reference: <strong>{submitted.reference}</strong>. If WhatsApp did not open
-                  automatically, click the button below:
+                  If WhatsApp did not open automatically, click the button below:
                 </p>
                 <a
                   href={submitted.whatsappUrl}

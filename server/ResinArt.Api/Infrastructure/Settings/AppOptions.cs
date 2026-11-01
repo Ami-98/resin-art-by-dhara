@@ -38,7 +38,7 @@ public sealed class WhatsAppOptions
     public string BaseUrl { get; set; } = "https://wa.me/";
 
     [Required, StringLength(200)]
-    public string DefaultMessage { get; set; } = "Hi, I'm interested in Resin art";
+    public string DefaultMessage { get; set; } = "✨ Hi Dhara! I'm interested in your handcrafted Resin Art and would love to know more. 🌸";
 
     public bool IncludeReference { get; set; }
 

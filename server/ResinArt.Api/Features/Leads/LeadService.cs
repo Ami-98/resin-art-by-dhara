@@ -36,7 +36,8 @@ public sealed partial class LeadService(
         var leadOpts = leadOptions.CurrentValue;
         var selectedRegion = regions.Normalize(req.SelectedRegion) ?? regions.DefaultRegion;
         var detectedRegion = regions.FromCountry(ipLookup.GetCountry(http));
-        var normalizedPhone = NormalizePhone(req.Phone, leadOpts.DefaultPhoneCountryCode);
+        var phoneCountryCode = GetRegionPhoneDialCode(selectedRegion, leadOpts.DefaultPhoneCountryCode);
+        var normalizedPhone = NormalizePhone(req.Phone, phoneCountryCode);
         var reference = await NextReferenceAsync("contact", leadOpts.ContactReferencePrefix, leadOpts.CounterStartValue, ct);
         var now = DateTimeOffset.UtcNow;
 
@@ -189,7 +190,7 @@ public sealed partial class LeadService(
             Contact = new CustomerContactInfo
             {
                 Name = req.Contact.Name.Trim(),
-                Phone = NormalizePhone(req.Contact.Phone, leadOpts.DefaultPhoneCountryCode),
+                Phone = NormalizePhone(req.Contact.Phone, GetRegionPhoneDialCode(selectedRegion, leadOpts.DefaultPhoneCountryCode)),
                 Email = req.Contact.Email.Trim(),
                 Address = string.IsNullOrWhiteSpace(req.Contact.Address) ? null : req.Contact.Address.Trim()
             },
@@ -224,82 +225,122 @@ public sealed partial class LeadService(
         return new LeadSubmissionResponse(doc.Id, reference, whatsappUrl, snapshot);
     }
 
-    private string BuildContactWhatsAppMessage(ContactDocument doc)
-    {
-        var wa = businessOptions.CurrentValue.WhatsApp;
-        var greeting = string.IsNullOrWhiteSpace(wa.DefaultMessage)
-            ? "Hi, I'm interested in Resin art"
-            : wa.DefaultMessage.Trim();
-
-        var lines = new List<string>
+    private static string GetRegionPhoneDialCode(string? regionCode, string fallback) =>
+        regionCode?.ToUpperInvariant() switch
         {
-            greeting,
-            "",
-            $"Name: {doc.Name}",
-            $"Phone: {doc.Phone}",
-            $"Email: {doc.Email}"
+            "US" or "CA" => "+1",
+            "GJ-IN" or "IN" => "+91",
+            _ => fallback
         };
 
+    private static string FormatRegionDisplayName(string? regionCode) =>
+        regionCode?.ToUpperInvariant() switch
+        {
+            "GJ-IN" => "India",
+            "US" => "United States",
+            "CA" => "Canada",
+            _ => regionCode ?? ""
+        };
+
+    private static string BuildContactWhatsAppMessage(ContactDocument doc)
+    {
+        var lines = new List<string>
+        {
+            "✨ *Hi Dhara! I'm interested in your handcrafted Resin Art.* 🌸",
+            "",
+            "Here are my details:",
+            $"👤 *Name:* {doc.Name}",
+            $"📞 *Phone:* {doc.Phone}",
+            $"✉️ *Email:* {doc.Email}"
+        };
+
+        var regionLabel = FormatRegionDisplayName(doc.SelectedRegion);
         if (!string.IsNullOrWhiteSpace(doc.Address))
-            lines.Add($"Address: {doc.Address}");
+        {
+            var loc = !string.IsNullOrWhiteSpace(regionLabel) &&
+                      !doc.Address.Contains(regionLabel, StringComparison.OrdinalIgnoreCase)
+                ? $"{doc.Address} ({regionLabel})"
+                : doc.Address;
+            lines.Add($"📍 *Location:* {loc}");
+        }
+        else if (!string.IsNullOrWhiteSpace(regionLabel))
+        {
+            lines.Add($"📍 *Location:* {regionLabel}");
+        }
 
-        if (!string.IsNullOrWhiteSpace(doc.SelectedRegion))
-            lines.Add($"Region: {doc.SelectedRegion}");
-
-        var productLabel = doc.ProductName ?? doc.ProductSlug;
+        var productLabel = doc.ProductName ?? doc.ProductSlug?.Replace('-', ' ');
         if (!string.IsNullOrWhiteSpace(productLabel))
-            lines.Add($"Product: {productLabel}");
+            lines.Add($"🎨 *Interested In:* {productLabel}");
 
         if (!string.IsNullOrWhiteSpace(doc.Message))
-            lines.Add($"Notes: {doc.Message}");
+        {
+            lines.Add("");
+            lines.Add($"💬 *My Notes / Idea:*");
+            lines.Add($"\"{doc.Message}\"");
+        }
 
-        if (!string.IsNullOrWhiteSpace(doc.Reference))
-            lines.Add($"Ref: {doc.Reference}");
+        lines.Add("");
+        lines.Add("Looking forward to planning my custom piece with you! 💛");
 
         return string.Join("\n", lines);
     }
 
-    private string BuildCustomRequestWhatsAppMessage(CustomRequestDocument doc)
+    private static string BuildCustomRequestWhatsAppMessage(CustomRequestDocument doc)
     {
-        var wa = businessOptions.CurrentValue.WhatsApp;
-        var greeting = string.IsNullOrWhiteSpace(wa.DefaultMessage)
-            ? "Hi, I'm interested in Resin art"
-            : wa.DefaultMessage.Trim();
-
         var lines = new List<string>
         {
-            greeting,
+            "✨ *Hi Dhara! I'd love to order a custom Resin Art piece.* 🌸",
             "",
-            $"Name: {doc.Contact.Name}",
-            $"Phone: {doc.Contact.Phone}",
-            $"Email: {doc.Contact.Email}"
+            $"🎨 *Selected Piece:* {doc.ProductNameSnapshot}"
         };
 
-        if (!string.IsNullOrWhiteSpace(doc.Contact.Address))
-            lines.Add($"Address: {doc.Contact.Address}");
-
-        if (!string.IsNullOrWhiteSpace(doc.SelectedRegion))
-            lines.Add($"Region: {doc.SelectedRegion}");
-
-        lines.Add($"Product: {doc.ProductNameSnapshot}");
-
+        var selectionLines = new List<string>();
         foreach (var sel in doc.Selections)
         {
             var val = sel.ChoiceLabel ?? sel.Value ?? (sel.Provided == true ? "Yes" : null);
             if (!string.IsNullOrWhiteSpace(val))
-                lines.Add($"• {sel.OptionLabel}: {val}");
+                selectionLines.Add($"  • *{sel.OptionLabel}:* {val}");
+        }
+
+        if (selectionLines.Count > 0)
+        {
+            lines.Add("🪄 *Customizations:*");
+            lines.AddRange(selectionLines);
         }
 
         if (doc.Extras.Count > 0)
-            lines.Add($"Extras: {string.Join(", ", doc.Extras)}");
+            lines.Add($"🎁 *Add-Ons:* {string.Join(", ", doc.Extras)}");
 
-        lines.Add($"Estimated Quote: {doc.Quote.Currency} {doc.Quote.Total / 100m:0.00}");
+        lines.Add($"💎 *Estimated Quote:* {doc.Quote.Currency} {doc.Quote.Total / 100m:0.00}");
+        lines.Add("");
+        lines.Add("👤 *My Contact Details:*");
+        lines.Add($"  • *Name:* {doc.Contact.Name}");
+        lines.Add($"  • *Phone:* {doc.Contact.Phone}");
+        lines.Add($"  • *Email:* {doc.Contact.Email}");
+
+        var regionLabel = FormatRegionDisplayName(doc.SelectedRegion);
+        if (!string.IsNullOrWhiteSpace(doc.Contact.Address))
+        {
+            var loc = !string.IsNullOrWhiteSpace(regionLabel) &&
+                      !doc.Contact.Address.Contains(regionLabel, StringComparison.OrdinalIgnoreCase)
+                ? $"{doc.Contact.Address} ({regionLabel})"
+                : doc.Contact.Address;
+            lines.Add($"  • *Location:* {loc}");
+        }
+        else if (!string.IsNullOrWhiteSpace(regionLabel))
+        {
+            lines.Add($"  • *Location:* {regionLabel}");
+        }
 
         if (!string.IsNullOrWhiteSpace(doc.Notes))
-            lines.Add($"Notes: {doc.Notes}");
+        {
+            lines.Add("");
+            lines.Add("💬 *Special Notes:*");
+            lines.Add($"\"{doc.Notes}\"");
+        }
 
-        if (!string.IsNullOrWhiteSpace(doc.Reference))
-            lines.Add($"Ref: {doc.Reference}");
+        lines.Add("");
+        lines.Add("Looking forward to creating this special keepsake with you! 💛");
 
         return string.Join("\n", lines);
     }

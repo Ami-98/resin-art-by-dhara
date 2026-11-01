@@ -132,13 +132,13 @@ public sealed class ApiIntegrationTests : IDisposable
         Assert.StartsWith("RA-C-", body.Reference);
         Assert.StartsWith("https://wa.me/14378180411?text=", body.WhatsappUrl);
         var decodedContactText = Uri.UnescapeDataString(body.WhatsappUrl.Split("?text=")[1]);
-        Assert.Contains("Hi, I'm interested in Resin art", decodedContactText);
-        Assert.Contains("Name: Priya Shah", decodedContactText);
-        Assert.Contains("Phone: +919876543210", decodedContactText);
-        Assert.Contains("Email: priya@example.com", decodedContactText);
-        Assert.Contains("Address: Ahmedabad, Gujarat", decodedContactText);
-        Assert.Contains("Notes: Interested in the ocean clock", decodedContactText);
-        Assert.Contains($"Ref: {body.Reference}", decodedContactText);
+        Assert.Contains("Hi Dhara! I'm interested in your handcrafted Resin Art.", decodedContactText);
+        Assert.Contains("*Name:* Priya Shah", decodedContactText);
+        Assert.Contains("*Phone:* +919876543210", decodedContactText);
+        Assert.Contains("*Email:* priya@example.com", decodedContactText);
+        Assert.Contains("*Location:* Ahmedabad, Gujarat (India)", decodedContactText);
+        Assert.Contains("\"Interested in the ocean clock\"", decodedContactText);
+        Assert.DoesNotContain("Ref:", decodedContactText);
 
         // Verify persisted in contacts.json with region-mismatch flag (detected US vs selected GJ-IN)
         var store = _factory.Services.GetRequiredService<IDocumentStore<ContactDocument>>();
@@ -206,10 +206,10 @@ public sealed class ApiIntegrationTests : IDisposable
         Assert.StartsWith("RA-R-", submitBody.Reference);
         Assert.StartsWith("https://wa.me/14378180411?text=", submitBody.WhatsappUrl);
         var decodedCustomText = Uri.UnescapeDataString(submitBody.WhatsappUrl.Split("?text=")[1]);
-        Assert.Contains("Hi, I'm interested in Resin art", decodedCustomText);
-        Assert.Contains("Name: Kavya Patel", decodedCustomText);
-        Assert.Contains("Notes: Please use soft pink petals", decodedCustomText);
-        Assert.Contains($"Ref: {submitBody.Reference}", decodedCustomText);
+        Assert.Contains("Hi Dhara! I'd love to order a custom Resin Art piece.", decodedCustomText);
+        Assert.Contains("*Name:* Kavya Patel", decodedCustomText);
+        Assert.Contains("\"Please use soft pink petals\"", decodedCustomText);
+        Assert.DoesNotContain("Ref:", decodedCustomText);
         Assert.NotNull(submitBody.QuotedPrice);
         // Base $54.99 (5499) + Name $5 (500) + Photo $9 (900) + Giftwrap $6 (600) = 7499 ($74.99)
         Assert.Equal(7499, submitBody.QuotedPrice.Total);
